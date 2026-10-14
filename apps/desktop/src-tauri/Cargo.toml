@@ -1,0 +1,37 @@
+[package]
+name = "lyriclens"
+version = "0.1.0"
+description = "LyricLens — live synced lyrics over any application"
+authors = ["LyricLens"]
+edition = "2021"
+rust-version = "1.77"
+
+# A library crate so the same code can back both the desktop binary and any
+# future mobile target.
+[lib]
+name = "lyriclens_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Phase 1 adds the platform media-session crates here:
+#   windows = { version = "0.6", features = ["Media_Playback"] }   # SMTC
+#   objc2, objc2-foundation                                          # NowPlaying
+#   mpris, tokio                                                    # MPRIS
+# They are deliberately absent now: compiling them before there is code that
+# uses them would fail on a clean checkout and block `cargo build`.
+
+[profile.release]
+# The overlay is a tiny always-resident window; size matters more than the last
+# few percent of speed.
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

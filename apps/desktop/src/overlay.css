@@ -1,0 +1,43 @@
+/*
+ * Overlay-specific styling.
+ *
+ * The overlay is a transparent, always-on-top, frameless window, so the only
+ * thing this file may do is make the window itself draggable and transparent.
+ * Everything visible comes from the design system.
+ */
+
+/* Transparent window: the native layer is see-through, this removes the
+   white flash before React mounts. */
+html,
+body,
+#root {
+  background: transparent;
+  min-height: 100%;
+}
+
+/* No rubber-band scroll or text selection on a floating panel. */
+body {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* The drag region is opt-in: Tauri treats a `data-tauri-drag-region` element
+   as the window handle, so buttons inside it must opt back out. */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] a {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Click-through mode: the window is fully transparent to the mouse. */
+.click-through,
+.click-through * {
+  pointer-events: none;
+}

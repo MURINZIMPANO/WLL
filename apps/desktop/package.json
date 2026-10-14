@@ -1,0 +1,36 @@
+{
+  "name": "@lyriclens/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "LyricLens desktop overlay (Tauri) — floats synced lyrics over any application.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "clean": "node -e \"const{rmSync}=require('node:fs');for(const p of ['dist','src-tauri/target'])rmSync(p,{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@lyriclens/shared": "workspace:*",
+    "@lyriclens/sync-engine": "workspace:*",
+    "@lyriclens/ui": "workspace:*",
+    "@tauri-apps/api": "^2.9.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@tauri-apps/cli": "^2.9.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "6.0.3",
+    "vite": "^8.3.4"
+  }
+}
