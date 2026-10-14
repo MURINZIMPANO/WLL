@@ -1,0 +1,21 @@
+# Normalise line endings on commit so a Windows checkout does not produce a
+# whole-file diff on Linux and macOS CI (and vice versa).
+* text=auto eol=lf
+
+# Files that must stay CRLF on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets.
+*.png binary
+*.ico binary
+*.icns binary
+*.woff2 binary
+*.db binary
+*.db-wal binary
+*.db-shm binary
+
+# Lockfiles and generated SQL are compared byte-for-byte in CI.
+pnpm-lock.yaml -diff
+apps/api/drizzle/*.sql -diff linguist-generated
