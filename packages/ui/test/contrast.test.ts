@@ -149,6 +149,20 @@ const PAIRS: Pair[] = [
   { theme: 'dark', fg: 'text-low', bg: 'surface', minimum: AA_TEXT, why: 'hints on cards' },
   {
     theme: 'dark',
+    fg: 'text-low',
+    bg: 'surface-2',
+    minimum: AA_TEXT,
+    why: 'hints on MediaCard art and rail placeholders — was 4.47:1, below AA',
+  },
+  {
+    theme: 'dark',
+    fg: 'text-low',
+    bg: 'bg-800',
+    minimum: AA_TEXT,
+    why: 'hints on an alternating section band',
+  },
+  {
+    theme: 'dark',
     fg: 'accent-ink',
     bg: 'accent',
     minimum: AA_TEXT,
@@ -215,6 +229,13 @@ const PAIRS: Pair[] = [
     bg: 'bg-900',
     minimum: AA_TEXT,
     why: 'lime as text on light — needs the darkened role, not the brand fill',
+  },
+  {
+    theme: 'light',
+    fg: 'accent-text',
+    bg: 'bg-800',
+    minimum: AA_TEXT,
+    why: 'lime as text on an alternating band — was 4.24:1, below AA',
   },
 ];
 
@@ -298,5 +319,26 @@ describe('design tokens — WCAG AA', () => {
   it('sets color-scheme so form controls and scrollbars follow the theme', () => {
     expect(css).toContain('color-scheme: dark');
     expect(css).toContain('color-scheme: light');
+  });
+
+  it('keeps interactive control boundaries above 3:1', () => {
+    // `--border-subtle` is a 9% hairline: right for a divider, far too faint
+    // for the edge of a control the user has to find and hit. WCAG 1.4.11 asks
+    // 3:1 for any boundary that identifies a control.
+    //
+    // This pair is the reason `Input` uses `--border-strong`: asserting it here
+    // means the component cannot quietly fall back to the subtle hairline while
+    // the token suite still reports green.
+    for (const theme of ['dark', 'light'] as const) {
+      const tokens = theme === 'dark' ? dark : light;
+      const ratio = contrast(tokens['border-strong'] as string, tokens['bg-900'] as string);
+      expect(
+        ratio,
+        `${theme}: --border-strong on --bg-900 is ${ratio.toFixed(2)}:1, control boundaries need 3:1`,
+      ).toBeGreaterThanOrEqual(3);
+
+      const subtle = contrast(tokens['border-subtle'] as string, tokens['bg-900'] as string);
+      expect(subtle, `${theme}: --border-subtle measures ${subtle.toFixed(2)}:1`).toBeLessThan(3);
+    }
   });
 });

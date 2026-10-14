@@ -31,8 +31,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
       <div
         className={cn(
-          'flex items-center gap-2 rounded-pill border bg-surface-glass px-4',
-          'transition-colors duration-150 ease-out',
+          'flex items-center gap-2 rounded-pill border border-strong bg-surface-glass px-4',
+          // A 1px inset highlight along the top edge: the cheapest way to make a
+          // translucent field read as a physical surface rather than a gap.
+          '[box-shadow:inset_0_1px_0_rgb(255_255_255/0.05)]',
+          'transition-[border-color,box-shadow,background-color] duration-150 ease-out',
+          'hover:bg-surface-glass-strong',
           'focus-within:border-accent focus-within:shadow-glow',
           error !== undefined && 'border-danger focus-within:border-danger',
           className,

@@ -10,6 +10,22 @@
 @import 'tailwindcss';
 
 /* --------------------------------------------------------------------------
+    Content detection.
+    `packages/ui` ships TypeScript source, so every consuming app (Next, Vite,
+    Storybook) compiles these components itself — and Tailwind only emits the
+    utilities it actually sees in source. Without this line nothing in this
+    package is scanned, and every class used *only* here (`p-5` on Card,
+    `w-40` on MediaCard, the `scroll-rail` / `app-gradient` custom utilities)
+    is silently dropped from the app's CSS. The components still render and
+    every story still "passes"; they just render unstyled.
+
+    Paths are relative to this stylesheet, per the Tailwind v4 `@source`
+    contract, so every consumer picks them up automatically.
+    -------------------------------------------------------------------------- */
+@source '../components';
+@source '../../src';
+
+/* --------------------------------------------------------------------------
    Tailwind theme bridge.
 
    `inline` keeps the generated utilities pointing at the CSS variable rather
@@ -190,14 +206,34 @@
   -webkit-backdrop-filter: blur(var(--blur-glass));
 }
 
-/** Horizontal card rails (Popular / New collection / Continue learning). */
+/**
+ * Horizontal card rails (Popular / New collection / Continue learning).
+ *
+ * Spacing is written as `calc(var(--spacing) * n)`, not `var(--spacing-n)`.
+ * Tailwind v4 defines a single `--spacing` unit and derives utilities from it;
+ * it does not emit one variable per step. `var(--spacing-4)` resolves to
+ * nothing, and an invalid value silently discards the whole declaration — so
+ * the rail was rendering with no gap at all.
+ */
 @utility scroll-rail {
   display: flex;
-  gap: var(--spacing-4);
+  gap: calc(var(--spacing) * 4);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  /* Keeps a snapped card clear of the container edge. */
+  scroll-padding-inline: calc(var(--spacing) * 1);
+  /* Soft fade at both ends. Without it the first and last card are sliced by
+     the container edge and the rail reads as "cut off" rather than "scrolls".
+     Short, so it never dims a card while it is in place. */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 calc(var(--spacing) * 4),
+    #000 calc(100% - var(--spacing) * 4),
+    transparent 100%
+  );
 
   &::-webkit-scrollbar {
     display: none;
@@ -207,6 +243,58 @@
     scroll-snap-align: start;
     flex: 0 0 auto;
   }
+
+  /* The rail is the only thing allowed to bleed past the page gutter, so a card
+     can sit flush with the viewport edge when the page container does not. */
+  @media (width >= 40rem) {
+    margin-inline: calc(var(--spacing) * -5);
+    padding-inline: calc(var(--spacing) * 5);
+  }
+}
+
+/**
+ * Section band.
+ *
+ * Alternates `bg-900` / `bg-800` down a long page so sections read as distinct
+ * bands rather than one endless column, without drawing a hard rule between
+ * them. `--bg-800` had no consumer until this existed.
+ */
+@utility section-band {
+  background-color: var(--bg-800);
+}
+
+/** Gradient scrim for text set over artwork. Guarantees legibility. */
+@utility scrim-bottom {
+  background-image: linear-gradient(
+    to top,
+    rgb(14 20 10 / 92%) 0%,
+    rgb(14 20 10 / 70%) 45%,
+    rgb(14 20 10 / 0%) 100%
+  );
+}
+
+/**
+ * Slow lime bloom for hero and feature panels.
+ *
+ * Purely decorative and sits behind content at low alpha, so it never carries
+ * text contrast. Paired with the global reduced-motion block, which collapses
+ * the animation to a static state rather than removing it.
+ */
+@keyframes ll-bloom {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate3d(0, -2%, 0) scale(1.06);
+  }
+}
+
+@utility bloom {
+  animation: ll-bloom 9s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
 /* --------------------------------------------------------------------------

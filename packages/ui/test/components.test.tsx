@@ -132,6 +132,16 @@ describe('Input', () => {
     expect(screen.getByText('Try the artist too')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('draws its boundary with the 3:1 border, not the faint hairline', () => {
+    // `--border-subtle` measures ~1.25:1 and is fine for a divider but not for
+    // the edge of a control. See the boundary pair in contrast.test.ts.
+    // (`border` alone is the width utility; the colour comes from `border-strong`.)
+    const { container } = render(<Input label="Song title" />);
+    const field = container.querySelector('input')?.parentElement;
+    expect(field?.className).toContain('border-strong');
+    expect(field?.className).not.toContain('border-subtle');
+  });
 });
 
 describe('Skeleton', () => {

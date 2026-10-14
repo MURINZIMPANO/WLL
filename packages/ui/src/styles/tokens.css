@@ -117,7 +117,10 @@
   --text-mid: #b9c4a8;
   /* Raised from #7f8c6e: at that value it measured 4.40:1 on --surface, which
      is below AA for body text. Verified in test/contrast.test.ts. */
-  --text-low: #8a9779;
+  /* Raised again from #8a9779, which measured 4.47:1 on --surface-2 — just
+     under AA, and --surface-2 is where MediaCard art and rail placeholders sit.
+     Two steps lighter in the same hue buys 5.21:1 with no visible change. */
+  --text-low: #8c997b;
 
   /* status ------------------------------------------------------------------ */
   --danger: #ff7a7a;
@@ -181,8 +184,10 @@
   --accent-press: #a2ca1c;
   --accent-ink: #0e140a;
   /* Lime as *text* fails AA on a light background, so the text role darkens
-     while the fill role keeps the brand lime. */
-  --accent-text: #5a7a0e;
+     while the fill role keeps the brand lime.
+     Darkened again from #5a7a0e, which measured 4.24:1 on --bg-800 — below AA,
+     and --bg-800 is now used for the alternating section bands. */
+  --accent-text: #54740b;
   --accent-soft: rgb(154 190 30 / 18%);
 
   --text-high: #0e140a;
