@@ -1,0 +1,28 @@
+/*
+ * App-level styles.
+ *
+ * Everything visual comes from `@lyriclens/ui/styles.css` — this file only adds
+ * what is specific to the web shell. If a rule here looks like it could belong
+ * in the design system, it belongs there instead.
+ */
+
+@layer base {
+  /* Offset in-page anchors so the mobile tab bar never covers a heading. */
+  :target {
+    scroll-margin-top: 5rem;
+  }
+}
+
+@layer components {
+  /* The gradient hero surface used on the landing page and the now-playing
+     screen. Declared once so both cannot drift apart. */
+  .hero-surface {
+    background-image: var(--gradient-brand);
+  }
+
+  /* Equaliser bars for the "now playing" indicator. */
+  .eq-bar {
+    animation: ll-eq 900ms ease-in-out infinite;
+    transform-origin: bottom;
+  }
+}
