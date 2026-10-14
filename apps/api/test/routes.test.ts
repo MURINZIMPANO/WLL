@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createHarness, type TestHarness } from './harness.js';
+import { createHarness, HARNESS_HOOK_TIMEOUT_MS, type TestHarness } from './harness.js';
 
 /**
  * One harness for the whole file: these are all read-only probes, and paying
@@ -13,11 +13,11 @@ describe('API — routes', () => {
   beforeAll(async () => {
     harness = await createHarness();
     await harness.app.server.ready();
-  }, 60_000);
+  }, HARNESS_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
     await harness.cleanup();
-  }, 60_000);
+  }, HARNESS_HOOK_TIMEOUT_MS);
 
   describe('GET /v1/health', () => {
     it('reports ok with every subsystem checked', async () => {
