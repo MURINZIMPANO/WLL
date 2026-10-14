@@ -1,0 +1,52 @@
+{
+  "name": "lyriclens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LyricLens — live synced lyrics, subtitles and language learning (PWA + desktop overlay)",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "storybook": "pnpm --filter @lyriclens/ui storybook",
+    "storybook:build": "pnpm --filter @lyriclens/ui storybook:build",
+    "db:generate": "pnpm --filter @lyriclens/api db:generate",
+    "db:migrate": "pnpm --filter @lyriclens/api db:migrate",
+    "db:studio": "pnpm --filter @lyriclens/api db:studio",
+    "speech:bootstrap": "pnpm --filter @lyriclens/speech bootstrap",
+    "speech:bootstrap:ml": "pnpm --filter @lyriclens/speech bootstrap:ml",
+    "doctor": "node scripts/doctor.mjs",
+    "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "clean": "turbo run clean && node -e \"const{rmSync}=require('node:fs');for(const p of ['node_modules/.cache','.turbo'])rmSync(p,{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.4.0",
+    "@types/node": "^26.6.5",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.8",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.71.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

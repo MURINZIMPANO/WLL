@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch supersedes the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Hardened for CI: no pretty logs, no implicit .env.
+  NODE_ENV: test
+  LOG_LEVEL: silent
+  LOG_PRETTY: 'false'
+  DATABASE_URL: file:./var/ci.db
+
+jobs:
+  # Fast feedback first: catches formatting and lint before anything slow runs.
+  static-checks:
+    name: Format, lint, typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+  unit:
+    name: Unit and integration tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          [
+            '@lyriclens/shared',
+            '@lyriclens/sync-engine',
+            '@lyriclens/ui',
+            '@lyriclens/api',
+            '@lyriclens/render',
+          ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Linux runners permit symlinks, so the default pnpm linker is used here.
+      # The repository pins node-linker=hoisted in .npmrc, which works on both.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install ffmpeg (render service probes it)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Generate database migrations
+        run: pnpm db:generate
+        if: matrix.package == '@lyriclens/api'
+
+      - name: Run tests
+        run: pnpm --filter ${{ matrix.package }} test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the design system catalogue
+        run: pnpm storybook:build
+
+      - name: Build the web app
+        run: pnpm --filter @lyriclens/web build
+
+      - name: Build the desktop webview bundle
+        run: pnpm --filter @lyriclens/desktop build
+
+      - name: Build the API
+        run: pnpm --filter @lyriclens/api build
+
+      # Catches the "someone edited the schema but forgot to regenerate" case,
+      # which otherwise only fails at runtime against a user's database.
+      - name: Verify migrations are up to date with the schema
+        run: |
+          pnpm db:generate
+          if ! git diff --quiet -- apps/api/drizzle; then
+            echo "::error::apps/api/drizzle is out of date. Run 'pnpm db:generate' and commit the result."
+            git diff --stat -- apps/api/drizzle
+            exit 1
+          fi
+
+  # The Rust shell only builds once Rust is present; the gate is a real compile
+  # rather than a stub, because a broken Cargo.toml should never reach main.
+  desktop-rust:
+    name: Tauri Rust shell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: linux-x86_64
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Required system libraries (webkit2gtk)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the overlay webview
+        run: pnpm --filter @lyriclens/desktop build
+
+      - name: cargo check
+        working-directory: apps/desktop/src-tauri
+        run: cargo check --locked
+
+  # A red check blocks the merge. This job exists to make that explicit and to
+  # give a single place to look for "is main green?".
+  required:
+    name: All gates green
+    if: always()
+    needs: [static-checks, unit, build, desktop-rust]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any gate failed
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more required gates did not pass."
+            exit 1
+          fi
+          echo "All gates passed."
