@@ -6,8 +6,8 @@
   "scripts": {
     "bootstrap": "py -3 bootstrap.py --tier core",
     "bootstrap:ml": "py -3 bootstrap.py --tier ml",
-    "dev": ".venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 4001",
-    "start": ".venv\\Scripts\\python.exe -m uvicorn app.main:app --port 4001",
+    "dev": "node dev.mjs",
+    "start": "node dev.mjs",
     "check": ".venv\\Scripts\\python.exe -c \"import app.main; print('speech service imports cleanly')\"",
     "clean": "node -e \"const{rmSync}=require('node:fs');for(const p of ['.venv','__pycache__','app/__pycache__'])rmSync(p,{recursive:true,force:true})\""
   }
