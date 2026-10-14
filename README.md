@@ -33,10 +33,21 @@ cp .env.example .env     # optional: everything runs without it
 pnpm dev
 ```
 
+`pnpm dev` checks the four ports it needs (3000, 1420, 4000, 4002) before
+starting anything. If one is already taken it names the process holding it and
+stops, rather than starting, crashing on `EADDRINUSE`, and taking the whole
+stack down with it.
+
 - Web app → <http://localhost:3000>
+- Signed-in shell → <http://localhost:3000/app/dashboard>
 - API → <http://localhost:4000> (`/v1/health`)
 - Render service → <http://localhost:4002> (`/health`)
+- Overlay UI (desktop window without the Tauri shell) → <http://localhost:1420>
 - Design system → `pnpm storybook` → <http://localhost:6006>
+
+The dashboard is a layout with placeholder data, labelled as such on screen.
+Accounts, playlists and history land in Phase 4; the point of building it now
+is that phase swaps data into a finished design rather than redesigning one.
 
 Speech service (optional, needs Python):
 
@@ -76,7 +87,7 @@ media encryption key and secure cookies. Development is permissive.
 
 | Command                                 | What it does                                             |
 | --------------------------------------- | -------------------------------------------------------- |
-| `pnpm dev`                              | Runs API + web + render together via turbo               |
+| `pnpm dev`                              | Checks ports, then runs API + web + render + overlay     |
 | `pnpm verify`                           | The full CI gate locally: format, lint, typecheck, tests |
 | `pnpm test`                             | Unit + integration tests across every package            |
 | `pnpm build`                            | Builds every package                                     |
@@ -138,7 +149,17 @@ resolve against the **repository root**, never the working directory, so
 truth, consumed unchanged by the web app, the desktop overlay and Storybook.
 `packages/ui/test/contrast.test.ts` parses the shipped CSS and asserts WCAG AA
 for every documented foreground/background pair, so a palette change that breaks
-contrast fails the build rather than shipping.
+contrast fails the build rather than shipping. Two rules the suite now enforces
+that it did not before: `--text-low` must clear 4.5:1 on **every** surface
+including `--surface-2` (where MediaCard art sits), and control boundaries must
+use `--border-strong` — `--border-subtle` measures ~1.25:1 and is a divider, not
+a hit target.
+
+**Tailwind content detection.** `packages/ui` ships TypeScript source, so every
+consumer compiles the components itself. The stylesheet declares `@source` paths
+relative to itself so Tailwind scans this package's classes; without them, every
+utility used _only_ here is silently dropped from the app's CSS and the
+components render unstyled while every story still passes.
 
 **Feature flags.** Every surface added after the foundation sits behind a flag
 that defaults to `false` (`packages/shared/src/feature-flags.ts`), overridable
@@ -172,14 +193,18 @@ pnpm --filter @lyriclens/shared test
 pnpm --filter @lyriclens/sync-engine test
 ```
 
-Current suite: **315 tests** across five packages — 126 codec/contract tests,
-63 sync-engine tests including the drift guarantee, 58 component tests plus 30
-WCAG contrast checks, 63 API integration tests against a real SQLite file, and
+Current suite: **325 tests** across five packages — 126 codec/contract tests,
+63 sync-engine tests including the drift guarantee, 59 component tests plus 34
+WCAG contrast checks, 68 API integration tests against a real SQLite file, and
 5 ffmpeg probe tests.
 
 API tests use a real database and a real temp directory rather than mocks: the
 failure modes this project must never ship ("my data vanished") live exactly in
-the seams a mock would hide.
+the seams a mock would hide. One consequence is that cleanup has to cope with
+libSQL closing the database file handle on a background I/O thread — the
+directory outlives `client.close()` by up to ~13s, so the harness waits for the
+handle instead of racing it (`apps/api/test/harness.ts`, covered by
+`apps/api/test/harness.test.ts`).
 
 Playwright end-to-end tests and the Lighthouse audit arrive with the phases that
 introduce the flows they cover (Phase 2 onward). CI runs typecheck, lint,
@@ -202,12 +227,24 @@ that fails if `apps/api/drizzle` drifts from the schema.
 
 ## Troubleshooting
 
+**`pnpm dev` exits with "N port(s) already in use"** — a previous run is still
+alive. The preflight prints the port, the pid and its command line; stop that
+process and run `pnpm dev` again. `API_PORT` and `RENDER_PORT` can move a
+service, but 3000 and 1420 are fixed by `next dev --port 3000` and by
+`apps/desktop/vite.config.ts`.
+
 **`ERR_PNPM_EPERM: operation not permitted, symlink`** — Windows Developer Mode
 is off, so symlinks need administrator rights. `.npmrc` already sets
 `node-linker=hoisted` to avoid this; if you removed it, put it back.
 
 **API reports `storage.encryption: false`** — expected without
 `MEDIA_ENCRYPTION_KEY`. Generate one before storing real uploads.
+
+**The web app says "API unreachable"** — the API only sends CORS headers for
+origins listed in `CORS_ORIGINS`, which is empty without a `.env`, so the
+browser blocks `http://localhost:3000` from calling `http://localhost:4000`.
+The status widget is reporting this correctly. Copy `.env.example` to `.env`
+(the template already lists both local origins) or set the variable explicitly.
 
 **Speech service says `faster-whisper is not installed`** — run
 `pnpm speech:bootstrap:ml`. It also reports this on `/health`, so nothing else

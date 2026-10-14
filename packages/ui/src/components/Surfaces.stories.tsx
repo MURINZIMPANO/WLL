@@ -70,9 +70,13 @@ export const Badges: Story = {
 
 export const CardRail: Story = {
   render: () => (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <section>
-        <h2 className="mb-3 text-lg font-extrabold tracking-tight">Continue listening</h2>
+        <h2 className="mb-1 text-lg font-extrabold tracking-tight">Caption cards</h2>
+        <p className="mb-3 text-sm text-text-low">
+          The default treatment for a rail of songs. Titles sit on the card, pinned to the bottom,
+          so a mixed run of square and wide art stays level.
+        </p>
         <MediaRail label="Continue listening">
           <MediaCard title="Hey Ya!" subtitle="OutKast" coverUrl={null} />
           <MediaCard
@@ -87,7 +91,66 @@ export const CardRail: Story = {
             aspect="wide"
             coverUrl="https://picsum.photos/seed/lyriclens/400/225"
           />
+          <MediaCard
+            title="Redbone"
+            subtitle="Childish Gambino"
+            coverUrl="https://picsum.photos/seed/lyriclens2/300/300"
+          />
         </MediaRail>
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-lg font-extrabold tracking-tight">Overlay cards</h2>
+        <p className="mb-3 text-sm text-text-low">
+          Image-forward, with the label on a gradient scrim. Use this treatment for a different kind
+          of collection so two rails on one page do not read identically.
+        </p>
+        <MediaRail label="Delivery phases">
+          <MediaCard
+            variant="overlay"
+            title="Music MVP"
+            subtitle="Phase 1"
+            meta="Desktop overlay, Spotify Connect, Identify song, LRCLIB lyrics"
+            aspect="wide"
+          />
+          <MediaCard
+            variant="overlay"
+            title="PWA shell"
+            subtitle="Phase 2"
+            meta="Manifest, service worker, offline, install prompt"
+            aspect="wide"
+            coverUrl="https://picsum.photos/seed/lyriclens3/600/450"
+          />
+          <MediaCard
+            variant="overlay"
+            title="Video mode"
+            subtitle="Phase 3"
+            meta="Upload, Whisper transcription, synced subtitles"
+            aspect="wide"
+          />
+        </MediaRail>
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-lg font-extrabold tracking-tight">Play affordance</h2>
+        <p className="mb-3 text-sm text-text-low">
+          Hover or focus a card. The affordance stays disabled — and says why — until real playback
+          lands in Phase 1.
+        </p>
+        <div className="grid max-w-md grid-cols-2 gap-4">
+          <MediaCard
+            className="w-full sm:w-full"
+            title="Inactive"
+            subtitle="No handler supplied"
+            disabledReason="Playback arrives in Phase 1"
+          />
+          <MediaCard
+            className="w-full sm:w-full"
+            title="Playable"
+            subtitle="Handler supplied"
+            onPlay={() => undefined}
+          />
+        </div>
       </section>
     </div>
   ),
@@ -148,13 +211,18 @@ export const Player: Story = {
 export const Navigation: Story = {
   render: () => (
     <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">
-      <div className="min-h-80 rounded-card border border-border-subtle bg-bg-800">
+      <div className="min-h-96 rounded-card border border-border-subtle bg-bg-800">
         <SidebarNav pathname="/app/library" />
+      </div>
+
+      <div className="min-h-96 rounded-card border border-border-subtle bg-bg-800">
+        <SidebarNav pathname="/app/dashboard" user={{ name: 'Demo Listener', initials: 'DL' }} />
       </div>
 
       <div className="relative min-h-80 rounded-card border border-border-subtle bg-bg-800">
         <p className="p-6 text-sm text-text-mid">
-          The floating pill tab bar renders at the bottom of the viewport on mobile.
+          The floating pill tab bar renders at the bottom of the viewport on mobile, and hides from{' '}
+          <code className="text-accent-text">lg</code> up where the sidebar takes over.
         </p>
         <MobileTabBar pathname="/app/library" />
       </div>

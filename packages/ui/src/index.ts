@@ -24,7 +24,13 @@ export {
   type ToastContextValue,
 } from './components/Toast';
 export { Sheet, type SheetProps } from './components/Sheet';
-export { MobileTabBar, SidebarNav, DEFAULT_NAV_ITEMS, type NavItem } from './components/AppNav';
+export {
+  MobileTabBar,
+  SidebarNav,
+  DEFAULT_NAV_ITEMS,
+  type NavItem,
+  type NavUser,
+} from './components/AppNav';
 export { cn } from './lib/cn';
 export {
   EASE_OUT,
